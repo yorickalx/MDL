@@ -8,7 +8,7 @@ from starlette.responses import StreamingResponse
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from backend.config import DOWNLOAD_PATH
-from backend.services.downloader import download_video_audio, get_video_metadata, \
+from backend.services.youtube import download_video_audio, get_video_metadata, \
     create_progress_callback
 
 app = FastAPI()

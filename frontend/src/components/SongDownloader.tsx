@@ -24,18 +24,17 @@ export default function SongDownloader() {
 
         let endpoint: string;
 
-        if (urlType === 'video') {
-            setSkeletonCount(s => s + 1);
-            endpoint = "ws://localhost:8000/ws/download/video";
+        setSkeletonCount(s => s + 1);
 
+        if (urlType === 'video') {
             const video: TVideo = await fetchVideoMetadata(url);
 
             setSkeletonCount(s => s - 1);
             addVideo(video);
+
+            endpoint = "ws://localhost:8000/ws/download/video";
         }
         else {
-            endpoint = "ws://localhost:8000/ws/download/playlist";
-
             await fetchPlaylistMetadata(
                 url,
                 (length) => setSkeletonCount(length),
@@ -44,6 +43,8 @@ export default function SongDownloader() {
                     setSkeletonCount(s => s - 1);
                 }
             );
+            
+            endpoint = "ws://localhost:8000/ws/download/playlist";
         }
 
         const ws = new WebSocket(endpoint);
