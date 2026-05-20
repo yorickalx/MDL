@@ -28,23 +28,24 @@ app.add_middleware(
 # TODO: error catching
 
 @app.get('/metadata/video')
-def get_metadata_video(url):
+async def get_metadata_video(url):
     return get_metadata(url)
 
 
 async def stream_playlist_metadata(playlist: Playlist):
 
-    tasks = [asyncio.to_thread(get_video_metadata, video) for video in playlist.videos]
+    tasks = [asyncio.to_thread(get_metadata, video.watch_url) for video in playlist.videos]
 
     yield json.dumps({'length': playlist.length }) + '\n'
 
     for coro in asyncio.as_completed(tasks):
         metadata = await coro
-        yield json.dumps(metadata) + '\n'
+        
+        yield json.dumps(metadata.__dict__) + '\n'
 
 
 @app.get('/metadata/playlist')
-def get_metadata_playlist(url):
+async def get_metadata_playlist(url):
     playlist = Playlist(url)
 
     return StreamingResponse(
