@@ -7,33 +7,29 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import StreamingResponse
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from backend.config import DOWNLOAD_PATH
+from backend.config import DOWNLOAD_PATH, ORIGINS
 from backend.services.youtube import download_video_audio, get_video_metadata, \
     create_progress_callback
+from backend.services.yt import get_metadata
 
 app = FastAPI()
 # /docs or /redoc for api documentation and testing
 
 
-origins = [
-    "http://localhost:5173",
-    # "https://your-production-domain.com",
-]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# TODO: error catching
 
 @app.get('/metadata/video')
 def get_metadata_video(url):
-    video = YouTube(url)
-
-    return get_video_metadata(video)
+    return get_metadata(url)
 
 
 async def stream_playlist_metadata(playlist: Playlist):

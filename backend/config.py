@@ -4,9 +4,26 @@ from dotenv import load_dotenv
 from os import getenv
 
 load_dotenv(dotenv_path=Path(__file__).parent / ".env")
-DOWNLOAD_PATH = getenv('DOWNLOAD_PATH')
+# CORS
+ORIGINS = [o for o in getenv("CORS_ORIGINS", "").split(",") if o]
 
-# Set default
-DOWNLOAD_PATH = Path(DOWNLOAD_PATH) if DOWNLOAD_PATH else Path(__file__).parent / "downloads"
-# Create folder
+# PATHS
+DATA_FOLDER = Path(__file__).parent / "data"
+DATA_FOLDER.mkdir(parents=True, exist_ok=True)
+
+DOWNLOAD_PATH = DATA_FOLDER / "downloads"
 DOWNLOAD_PATH.mkdir(parents=True, exist_ok=True)
+
+DOWNLOAD_ARCHIVE_PATH = DATA_FOLDER / "download_archive.txt"
+DOWNLOAD_ARCHIVE_PATH.touch(exist_ok=True)
+
+SKIP_ALREADY_DOWNLOADED = True if getenv("SKIP_ALREADY_DOWNLOADED") == "true" else False
+
+YDL_OPTIONS = {
+    "format": "bestaudio/best",
+    "postprocessors": [{
+        "key": "FFmpegExtractAudio",
+    }],
+    "outtmpl": "%(title)s.%(ext)s",
+    "download_archive": DOWNLOAD_ARCHIVE_PATH if SKIP_ALREADY_DOWNLOADED else None,
+}

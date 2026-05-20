@@ -1,9 +1,9 @@
 export type TVideo = {
     id: string,
     title: string,
-    author: string,
+    uploader: string,
     url: string,
     thumbnailUrl: string,
-    duration: number,
+    duration: string,
     progress: number,
 }

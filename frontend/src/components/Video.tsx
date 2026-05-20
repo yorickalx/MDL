@@ -4,13 +4,13 @@ import {Item, ItemContent, ItemDescription, ItemMedia, ItemTitle} from "@/compon
 type VideoProps = {
     id: string,
     title: string,
-    author: string,
+    uploader: string,
     url: string,
-    duration: number,
+    duration: string,
     progress?: number,
 }
 
-export default function Video({id, title, author, url, duration, progress = 0}: VideoProps) {
+export default function Video({id, title, uploader, url, duration, progress = 0}: VideoProps) {
     return (
         <Item variant="outline" role="listitem">
             <a href={url} target="_blank">
@@ -30,15 +30,13 @@ export default function Video({id, title, author, url, duration, progress = 0}: 
                     {title}
                 </ItemTitle>
                 <ItemDescription>
-                    {author}
+                    {uploader}
                 </ItemDescription>
             </ItemContent>
             <ItemContent className="flex-none text-center">
-                <ItemDescription>{
-                    `${Math.floor(duration/60)}:${duration - (Math.floor(duration/60) * 60)}`
-
-                //TODO:     ADD STATUS CHECKMARK OR CROSS
-                }</ItemDescription>
+                <ItemDescription>
+                    {duration}
+                </ItemDescription>
             </ItemContent>
             <Progress value={progress}/>
         </Item>
