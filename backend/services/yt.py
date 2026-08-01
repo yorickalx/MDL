@@ -18,3 +18,7 @@ def get_metadata(url: str) -> DownloadMetadata | None:
             uploader=info['uploader'],
         )
 
+
+def download_audio(url: str):
+    with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+        ydl.download([url])

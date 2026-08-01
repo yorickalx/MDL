@@ -24,6 +24,11 @@ YDL_OPTIONS = {
     "postprocessors": [{
         "key": "FFmpegExtractAudio",
     }],
-    "outtmpl": "%(title)s.%(ext)s",
+    "outtmpl": "%(uploader)s - %(title)s.%(ext)s",
     "download_archive": DOWNLOAD_ARCHIVE_PATH if SKIP_ALREADY_DOWNLOADED else None,
+    "sleep_interval": 2,        # seconds between requests
+    "max_sleep_interval": 5,
+    "paths": {
+        "home":str(DOWNLOAD_PATH)
+    }
 }
