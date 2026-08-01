@@ -68,71 +68,71 @@ async def download_video(request: Request):
         return {"error": str(e)}
 
 
-@app.websocket('/ws/download/video')
-async def ws_download_video(websocket: WebSocket):
-    await websocket.accept()
-
-    try:
-        url = await websocket.receive_text()
-
-        yt = YouTube(url)
-        metadata = get_video_metadata(yt)
-
-        on_progress = create_progress_callback(metadata['id'], websocket)
-        await download_video_audio(url, on_progress)
-
-        await websocket.send_json({
-            'type': 'progress',
-            'data': {
-                'value': 100,
-                'id': metadata['id'],
-            }
-        })
-
-    except WebSocketDisconnect:
-        print("Client disconnected")
-    except Exception as e:
-        await websocket.send_json({"error": str(e)})
-
-
-@app.websocket('/ws/download/playlist')
-async def download(websocket: WebSocket):
-    await websocket.accept()
-
-    try:
-        url = await websocket.receive_text()
-
-        playlist = Playlist(url)
-        print(f"Playlist : {playlist.title} ({playlist.length} videos)")
-
-        # Start download
-        downloaded_files = []
-        for index, video in enumerate(playlist.videos):
-            try:
-                print(f"[{index + 1}/{playlist.length}]")
-
-                on_progress = create_progress_callback(video.video_id, websocket)
-                path = await download_video_audio(video.watch_url, on_progress)
-
-                await websocket.send_json({
-                    'type': 'progress',
-                    'data': {
-                        'value': 100,
-                        'id': video.video_id,
-                    }
-                })
-
-                downloaded_files.append(path)
-            except Exception as e:
-                print(f"    Skipped '{video.title}' ({video.watch_url}): {e}")
-                # TODO: send error through websocket
-
-        print(f"\nDone — {len(downloaded_files)} file(s) saved to: {DOWNLOAD_PATH}")
+# @app.websocket('/ws/download/video')
+# async def ws_download_video(websocket: WebSocket):
+#     await websocket.accept()
+#
+#     try:
+#         url = await websocket.receive_text()
+#
+#         yt = YouTube(url)
+#         metadata = get_video_metadata(yt)
+#
+#         on_progress = create_progress_callback(metadata['id'], websocket)
+#         await download_video_audio(url, on_progress)
+#
+#         await websocket.send_json({
+#             'type': 'progress',
+#             'data': {
+#                 'value': 100,
+#                 'id': metadata['id'],
+#             }
+#         })
+#
+#     except WebSocketDisconnect:
+#         print("Client disconnected")
+#     except Exception as e:
+#         await websocket.send_json({"error": str(e)})
 
 
-    except WebSocketDisconnect:
-        print("Client disconnected")
-    except Exception as e:
-        await websocket.send_json({"error": str(e)})
+# @app.websocket('/ws/download/playlist')
+# async def download(websocket: WebSocket):
+#     await websocket.accept()
+#
+#     try:
+#         url = await websocket.receive_text()
+#
+#         playlist = Playlist(url)
+#         print(f"Playlist : {playlist.title} ({playlist.length} videos)")
+#
+#         # Start download
+#         downloaded_files = []
+#         for index, video in enumerate(playlist.videos):
+#             try:
+#                 print(f"[{index + 1}/{playlist.length}]")
+#
+#                 on_progress = create_progress_callback(video.video_id, websocket)
+#                 path = await download_video_audio(video.watch_url, on_progress)
+#
+#                 await websocket.send_json({
+#                     'type': 'progress',
+#                     'data': {
+#                         'value': 100,
+#                         'id': video.video_id,
+#                     }
+#                 })
+#
+#                 downloaded_files.append(path)
+#             except Exception as e:
+#                 print(f"    Skipped '{video.title}' ({video.watch_url}): {e}")
+#                 # TODO: send error through websocket
+#
+#         print(f"\nDone — {len(downloaded_files)} file(s) saved to: {DOWNLOAD_PATH}")
+#
+#
+#     except WebSocketDisconnect:
+#         print("Client disconnected")
+#     except Exception as e:
+#         await websocket.send_json({"error": str(e)})
 
 

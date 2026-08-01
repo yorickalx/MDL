@@ -21,4 +21,6 @@ def get_metadata(url: str) -> DownloadMetadata | None:
 
 def download_audio(url: str):
     with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+        #TODO: send status and percent as response (and ETA/speed?)
+        ydl.add_progress_hook(lambda x: print(x['status'], x['_percent']))
         ydl.download([url])

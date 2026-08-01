@@ -30,5 +30,9 @@ YDL_OPTIONS = {
     "max_sleep_interval": 5,
     "paths": {
         "home":str(DOWNLOAD_PATH)
-    }
+    },
+
+    "embed_metadata": True,
+    # "no_embed_chapters": True,
+    # "embed_thumbnail": True,
 }
