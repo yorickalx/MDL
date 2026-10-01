@@ -21,9 +21,11 @@ SKIP_ALREADY_DOWNLOADED = True if getenv("SKIP_ALREADY_DOWNLOADED") == "true" el
 
 YDL_OPTIONS = {
     "format": "bestaudio/best",
-    "postprocessors": [{
-        "key": "FFmpegExtractAudio",
-    }],
+    "postprocessors": [
+        # {"key": "EmbedThumbnail"},
+        {"key": "FFmpegExtractAudio"},
+        {"key": "FFmpegMetadata", "add_metadata": True},
+    ],
     "outtmpl": "%(uploader)s - %(title)s.%(ext)s",
     "download_archive": DOWNLOAD_ARCHIVE_PATH if SKIP_ALREADY_DOWNLOADED else None,
     "sleep_interval": 2,        # seconds between requests
@@ -31,8 +33,4 @@ YDL_OPTIONS = {
     "paths": {
         "home":str(DOWNLOAD_PATH)
     },
-
-    "embed_metadata": True,
-    # "no_embed_chapters": True,
-    # "embed_thumbnail": True,
 }

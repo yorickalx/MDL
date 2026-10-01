@@ -1,16 +1,18 @@
-import asyncio
+from dataclasses import asdict
 import json
+import queue
 
 from fastapi import FastAPI, Request
-from pytubefix import Playlist, YouTube
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import StreamingResponse
-from starlette.websockets import WebSocket, WebSocketDisconnect
+# from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from backend.config import DOWNLOAD_PATH, ORIGINS
-from backend.services.youtube import download_video_audio, get_video_metadata, \
-    create_progress_callback
-from backend.services.yt import get_metadata, download_audio
+from config import DOWNLOAD_PATH, ORIGINS
+from custom_types import DownloadProgress
+# from services.youtube import download_video_audio, get_video_metadata, \
+#     create_progress_callback
+from services.yt import get_metadata, download_audio
+from threading import Thread
 
 app = FastAPI()
 # /docs or /redoc for api documentation and testing
@@ -32,55 +34,76 @@ async def get_metadata_video(url):
     return get_metadata(url)
 
 
-async def stream_playlist_metadata(playlist: Playlist):
+# async def stream_playlist_metadata(playlist: Playlist):
 
-    tasks = [asyncio.to_thread(get_metadata, video.watch_url) for video in playlist.videos]
+#     tasks = [asyncio.to_thread(get_metadata, video.watch_url) for video in playlist.videos]
 
-    yield json.dumps({'length': playlist.length }) + '\n'
+#     yield json.dumps({'length': playlist.length }) + '\n'
 
-    for coro in asyncio.as_completed(tasks):
-        metadata = await coro
+#     for coro in asyncio.as_completed(tasks):
+#         metadata = await coro
 
-        yield json.dumps(metadata.__dict__) + '\n'
+#         yield json.dumps(metadata.__dict__) + '\n'
 
 
-@app.get('/metadata/playlist')
-async def get_metadata_playlist(url):
-    playlist = Playlist(url)
+# @app.get('/metadata/playlist')
+# async def get_metadata_playlist(url):
+#     playlist = Playlist(url)
+
+#     return StreamingResponse(
+#         stream_playlist_metadata(playlist),
+#         media_type="application/x-ndjson",
+#     )
+
+
+@app.get('/download')
+def download(url: str):
+    ### Downloads Video or Playlist
+
+    q = queue.Queue()
+
+    def hook(data: DownloadProgress):
+        q.put(asdict(data))
+
+
+    def run():
+        try:
+            download_audio(url, hook)
+            q.put({"status": "done"})
+
+        except Exception as e:
+            q.put({"status": "error", "error": str(e)})
+
+
+
+    def stream():
+        Thread(target=run, daemon=True).start()
+        while True:
+            msg = q.get()
+            yield f"data: {json.dumps(msg)}\n\n"
+            if msg["status"] in ("done", "error"):
+                break
 
     return StreamingResponse(
-        stream_playlist_metadata(playlist),
-        media_type="application/x-ndjson",
+        stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     )
-
-
-@app.post('/download/video')
-async def download_video(request: Request):
-    try:
-        req = await request.json()
-        url = req['url']
-
-        download_audio(url)
-
-        return {"success": True}
-
-    except Exception as e:
-        return {"error": str(e)}
 
 
 # @app.websocket('/ws/download/video')
 # async def ws_download_video(websocket: WebSocket):
 #     await websocket.accept()
-#
+
 #     try:
 #         url = await websocket.receive_text()
-#
+
 #         yt = YouTube(url)
 #         metadata = get_video_metadata(yt)
-#
+
 #         on_progress = create_progress_callback(metadata['id'], websocket)
 #         await download_video_audio(url, on_progress)
-#
+
 #         await websocket.send_json({
 #             'type': 'progress',
 #             'data': {
@@ -88,7 +111,7 @@ async def download_video(request: Request):
 #                 'id': metadata['id'],
 #             }
 #         })
-#
+
 #     except WebSocketDisconnect:
 #         print("Client disconnected")
 #     except Exception as e:
