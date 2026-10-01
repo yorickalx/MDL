@@ -1,18 +1,15 @@
-from dataclasses import asdict
 import json
 import queue
+from threading import Thread
+from dataclasses import asdict
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import StreamingResponse
-# from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from config import DOWNLOAD_PATH, ORIGINS
+from config import ORIGINS
 from custom_types import DownloadProgress
-# from services.youtube import download_video_audio, get_video_metadata, \
-#     create_progress_callback
 from services.yt import get_metadata, download_audio
-from threading import Thread
 
 app = FastAPI()
 # /docs or /redoc for api documentation and testing
@@ -29,36 +26,19 @@ app.add_middleware(
 
 # TODO: error catching
 
-@app.get('/metadata/video')
-async def get_metadata_video(url):
+@app.get('/metadata')
+async def get_metadata(url):
+    """
+    Get metadata from video or playlist
+    """
     return get_metadata(url)
-
-
-# async def stream_playlist_metadata(playlist: Playlist):
-
-#     tasks = [asyncio.to_thread(get_metadata, video.watch_url) for video in playlist.videos]
-
-#     yield json.dumps({'length': playlist.length }) + '\n'
-
-#     for coro in asyncio.as_completed(tasks):
-#         metadata = await coro
-
-#         yield json.dumps(metadata.__dict__) + '\n'
-
-
-# @app.get('/metadata/playlist')
-# async def get_metadata_playlist(url):
-#     playlist = Playlist(url)
-
-#     return StreamingResponse(
-#         stream_playlist_metadata(playlist),
-#         media_type="application/x-ndjson",
-#     )
 
 
 @app.get('/download')
 def download(url: str):
-    ### Downloads Video or Playlist
+    """
+    Downloads video or playlist
+    """
 
     q = queue.Queue()
 
@@ -75,7 +55,6 @@ def download(url: str):
             q.put({"status": "error", "error": str(e)})
 
 
-
     def stream():
         Thread(target=run, daemon=True).start()
         while True:
@@ -89,73 +68,3 @@ def download(url: str):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     )
-
-
-# @app.websocket('/ws/download/video')
-# async def ws_download_video(websocket: WebSocket):
-#     await websocket.accept()
-
-#     try:
-#         url = await websocket.receive_text()
-
-#         yt = YouTube(url)
-#         metadata = get_video_metadata(yt)
-
-#         on_progress = create_progress_callback(metadata['id'], websocket)
-#         await download_video_audio(url, on_progress)
-
-#         await websocket.send_json({
-#             'type': 'progress',
-#             'data': {
-#                 'value': 100,
-#                 'id': metadata['id'],
-#             }
-#         })
-
-#     except WebSocketDisconnect:
-#         print("Client disconnected")
-#     except Exception as e:
-#         await websocket.send_json({"error": str(e)})
-
-
-# @app.websocket('/ws/download/playlist')
-# async def download(websocket: WebSocket):
-#     await websocket.accept()
-#
-#     try:
-#         url = await websocket.receive_text()
-#
-#         playlist = Playlist(url)
-#         print(f"Playlist : {playlist.title} ({playlist.length} videos)")
-#
-#         # Start download
-#         downloaded_files = []
-#         for index, video in enumerate(playlist.videos):
-#             try:
-#                 print(f"[{index + 1}/{playlist.length}]")
-#
-#                 on_progress = create_progress_callback(video.video_id, websocket)
-#                 path = await download_video_audio(video.watch_url, on_progress)
-#
-#                 await websocket.send_json({
-#                     'type': 'progress',
-#                     'data': {
-#                         'value': 100,
-#                         'id': video.video_id,
-#                     }
-#                 })
-#
-#                 downloaded_files.append(path)
-#             except Exception as e:
-#                 print(f"    Skipped '{video.title}' ({video.watch_url}): {e}")
-#                 # TODO: send error through websocket
-#
-#         print(f"\nDone — {len(downloaded_files)} file(s) saved to: {DOWNLOAD_PATH}")
-#
-#
-#     except WebSocketDisconnect:
-#         print("Client disconnected")
-#     except Exception as e:
-#         await websocket.send_json({"error": str(e)})
-
-
