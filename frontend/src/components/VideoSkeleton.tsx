@@ -14,7 +14,6 @@ export default function VideoSkeleton() {
             <ItemContent className="flex-none text-center">
                 <Skeleton className="w-8 h-4" />
             </ItemContent>
-            <Skeleton className="w-full h-3"/>
         </Item>
     );
 }

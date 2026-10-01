@@ -3,68 +3,48 @@ import {ItemGroup} from "@/components/ui/item.tsx";
 import Video from "./Video.tsx";
 import {useRef, useState} from "react";
 import VideoSkeleton from "./VideoSkeleton.tsx";
-import type {TVideo} from "@/types.ts";
-import {fetchPlaylistMetadata, fetchVideoMetadata} from "@/utils/youtube.ts";
+import type {TDownloadProgress} from "@/types.ts";
+import {fetchMetadata} from "@/utils/youtube.ts";
 import useVideos from "@/hooks/useVideos.ts";
 
 export default function SongDownloader() {
     const urlInputRef = useRef<HTMLInputElement>(null);
 
-    const {videos, addVideo, updateVideoProgress} = useVideos();
-    const [skeletonCount, setSkeletonCount] = useState(0);
+    // const {videos, addVideo} = useVideos();
+    const [showSkeleton, setShowSkeleton] = useState(false);
+
+    const {videos, addVideo, addVideos} = useVideos();
+    const [progress, setProgress] = useState<Record<string, TDownloadProgress>>({}); // key is video id
+
 
     async function handleSubmit() {
-
         if (!urlInputRef.current?.value) return;
-
-
         const url: string = urlInputRef.current.value;
 
-        const urlType = url.includes('playlist') ? 'playlist' : 'video';
+        setShowSkeleton(true);
 
-        let endpoint: string;
+        // Get metadata
+        const metadata = await fetchMetadata(url);
 
-        setSkeletonCount(s => s + 1);
+        if (metadata.length > 1) { addVideos(metadata) } else { addVideo(metadata[0]) }
+        setShowSkeleton(false);
 
-        if (urlType === 'video') {
-            const video: TVideo = await fetchVideoMetadata(url);
-
-            setSkeletonCount(s => s - 1);
-            addVideo(video);
-
-            endpoint = "ws://localhost:8000/ws/download/video";
-        }
-        else {
-            await fetchPlaylistMetadata(
-                url,
-                (length) => setSkeletonCount(length),
-                (video) => {
-                    addVideo(video);
-                    setSkeletonCount(s => s - 1);
-                }
-            );
+        // Download audio
+        const es = new EventSource(`http://localhost:8000/download?url=${encodeURIComponent(url)}`);
+        es.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            const p: TDownloadProgress = {
+                videoId: data.video_id,
+                status: data.status,
+                percent: data.percent,
+                eta: data.eta,
+                speed: data.speed,
+            };
             
-            endpoint = "ws://localhost:8000/ws/download/playlist";
-        }
+            setProgress(prev => ({ ...prev, [p.videoId]: p }));
 
-        const ws = new WebSocket(endpoint);
-
-        ws.addEventListener("open", () => {
-            ws.send(url);
-        });
-
-        ws.addEventListener("message", e => {
-            const res = JSON.parse(e.data);
-            const data = res.data;
-
-            switch (res.type) {
-                case "progress":
-                    updateVideoProgress(data.id, data.value);
-                    break;
-                default:
-                    break;
-            }
-        });
+            if (p.status === "done" || p.status === "error") es.close();
+        };
     }
 
     return (
@@ -73,15 +53,11 @@ export default function SongDownloader() {
             <ItemGroup>
                 {
                     videos.map(video => (
-                        <Video key={video.id} {...video}/>
+                        <Video key={video.id} progress={progress[video.id]} {...video}/>
                     ))
                 }
 
-                {
-                    Array.from({ length: skeletonCount }).map((_, i) => (
-                        <VideoSkeleton key={i}/>
-                    ))
-                }
+                { showSkeleton && <VideoSkeleton/> }
             </ItemGroup>
         </>
     );

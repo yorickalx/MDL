@@ -31,9 +31,9 @@ def format_metadata(ydl_data) -> YoutubeMetadata:
     return YoutubeMetadata(
         id=ydl_data['id'],
         title=ydl_data['title'],
-        url=ydl_data['url'],
+        url=ydl_data.get('original_url') or ydl_data.get('url') ,
         duration=ydl_data['duration'],
-        thumbnail_url=ydl_data['thumbnails'][-1]['url'], # highest resolution
+        thumbnail_url= ydl_data.get('thumbnail') or ydl_data['thumbnails'][-1]['url'], # highest resolution
         uploader=ydl_data['uploader'],
     )
 
@@ -50,7 +50,7 @@ def download_audio(url: str, hook: function):
 def format_download_progress(ydl_data) -> DownloadProgress:
 
     return DownloadProgress(
-        id = ydl_data['info_dict']['id'],
+        video_id = ydl_data['info_dict']['id'],
         status = ydl_data['status'],
         percent = ydl_data['_percent'],
         eta = ydl_data.get('eta'),

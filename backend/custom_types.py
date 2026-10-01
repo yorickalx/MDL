@@ -13,7 +13,7 @@ class YoutubeMetadata:
 
 @dataclass
 class DownloadProgress:
-    id: str
+    video_id: str
     status: str
     percent: str
     eta: str
