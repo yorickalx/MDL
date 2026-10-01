@@ -8,7 +8,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import StreamingResponse
 
 from config import ORIGINS
-from custom_types import DownloadProgress
+from custom_types import DownloadProgress, YoutubeMetadata
 from services.yt import get_metadata, download_audio
 
 app = FastAPI()
@@ -27,11 +27,14 @@ app.add_middleware(
 # TODO: error catching
 
 @app.get('/metadata')
-async def get_metadata(url):
+async def metadata(url: str) -> list[dict]:
     """
     Get metadata from video or playlist
     """
-    return get_metadata(url)
+    metadata = get_metadata(url)
+
+    return [asdict(i) for i in metadata]
+
 
 
 @app.get('/download')

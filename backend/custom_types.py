@@ -6,7 +6,7 @@ class YoutubeMetadata:
     id: str
     title: str
     url: str
-    duration: str
+    duration: int
     thumbnail_url: str
     uploader: str
 

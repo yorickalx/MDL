@@ -31,9 +31,9 @@ def format_metadata(ydl_data) -> YoutubeMetadata:
     return YoutubeMetadata(
         id=ydl_data['id'],
         title=ydl_data['title'],
-        url=ydl_data['original_url'],
-        duration=ydl_data['duration_string'],
-        thumbnail_url=ydl_data['thumbnail'],
+        url=ydl_data['url'],
+        duration=ydl_data['duration'],
+        thumbnail_url=ydl_data['thumbnails'][-1]['url'], # highest resolution
         uploader=ydl_data['uploader'],
     )
 
