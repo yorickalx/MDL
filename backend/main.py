@@ -9,7 +9,7 @@ from starlette.responses import StreamingResponse
 
 from config import ORIGINS
 from custom_types import DownloadProgress, YoutubeMetadata
-from services.yt import get_metadata, download_audio
+from services import yt
 
 app = FastAPI()
 # /docs or /redoc for api documentation and testing
@@ -20,8 +20,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ORIGINS,
     allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
 
 # TODO: error catching
@@ -31,7 +31,7 @@ async def metadata(url: str) -> list[dict]:
     """
     Get metadata from video or playlist
     """
-    metadata = get_metadata(url)
+    metadata = yt.get_metadata(url)
 
     return [asdict(i) for i in metadata]
 
@@ -51,7 +51,7 @@ def download(url: str):
 
     def run():
         try:
-            download_audio(url, hook)
+            yt.download_audio(url, hook)
             q.put({"status": "done"})
 
         except Exception as e:

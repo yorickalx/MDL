@@ -1,6 +1,6 @@
 # Backend of MDL
 ## .env fields
- - ORIGINS=origin1,origin2
+ - CORS_ORIGINS=origin1,origin2 (trusted origins)
  - SKIP_ALREADY_DOWNLOADED=true / false (skips songs you already downloaded in the past)
 
 start dev:

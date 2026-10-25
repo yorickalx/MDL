@@ -1,6 +1,7 @@
 import {Progress} from "@/components/ui/progress.tsx";
 import {Item, ItemContent, ItemDescription, ItemMedia, ItemTitle} from "@/components/ui/item.tsx";
 import type { TDownloadProgress } from "@/types";
+import { useDownloads } from "@/stores/useDownloads";
 
 type VideoProps = {
     id: string,
@@ -8,12 +9,11 @@ type VideoProps = {
     uploader: string,
     url: string,
     duration: number,
-    progress?: TDownloadProgress
 }
 
-export default function Video({id, title, uploader, url, duration, progress }: VideoProps) {
+export default function Video({id, title, uploader, url, duration }: VideoProps) {
     
-    console.log("in vid ", progress);
+    const progress: TDownloadProgress = useDownloads(s => s.progress[id]);
     
     return (
         <Item variant="outline" role="listitem">
