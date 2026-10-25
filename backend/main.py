@@ -1,9 +1,11 @@
 import json
 import queue
+import uuid
 from threading import Thread
 from dataclasses import asdict
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import StreamingResponse
 
@@ -13,6 +15,12 @@ from services import yt
 
 app = FastAPI()
 # /docs or /redoc for api documentation and testing
+
+jobs: dict[str, queue.Queue] = {} # job_id -> queue of messages
+
+
+class DownloadRequest(BaseModel):
+    yt_ids: list[str]
 
 
 
@@ -36,36 +44,64 @@ async def metadata(url: str) -> list[dict]:
     return [asdict(i) for i in metadata]
 
 
-
-@app.get('/download')
-def download(url: str):
+@app.post('/downloads')
+def start_downloads(body: DownloadRequest):
     """
-    Downloads video or playlist
+    Start download of a video
     """
 
+    job_id = str(uuid.uuid4())
     q = queue.Queue()
+    jobs[job_id] = q # Store this queue with job id
 
-    def hook(data: DownloadProgress):
-        q.put(asdict(data))
+
+    # progress hook for ytdlp
+    def hook(progress: DownloadProgress):
+        q.put(asdict(progress))
 
 
     def run():
-        try:
-            yt.download_audio(url, hook)
-            q.put({"status": "done"})
+        for vid in body.yt_ids:
+            try:
+                yt.download_audio(f"https://www.youtube.com/watch?v={vid}", hook)
+                q.put({
+                    "video_id": vid, 
+                    "status": "done", 
+                    "percent": 100,
+                })
+            except Exception as e:
+                q.put({
+                    "video_id": vid,
+                    "status": "error",
+                })
+                print(f"Error downloading video with id {vid}: ", e)
 
-        except Exception as e:
-            q.put({"status": "error", "error": str(e)})
+        q.put({"status": "all_done"})  # no video_id: signals the end of the stream
 
+    # Start download
+    Thread(target=run, daemon=True).start()
+    return {"job_id": job_id}
+
+
+@app.get("/downloads/{job_id}/events")
+def events(job_id: str):
+    """
+    Connect to event stream by job id
+    """
+    q = jobs.get(job_id)
+    if q is None:
+        raise HTTPException(404, "Unknown job")
 
     def stream():
-        Thread(target=run, daemon=True).start()
-        while True:
-            msg = q.get()
-            yield f"data: {json.dumps(msg)}\n\n"
-            if msg["status"] in ("done", "error"):
-                break
-
+            try:
+                while True:
+                    msg = q.get()
+                    yield f"data: {json.dumps(msg)}\n\n"
+                    if msg["status"] == "all_done":
+                        break
+            finally:
+                jobs.pop(job_id, None)
+    
     return StreamingResponse(
         stream(),
         media_type="text/event-stream",

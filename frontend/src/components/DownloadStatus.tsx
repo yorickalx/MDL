@@ -2,7 +2,7 @@ import type { TDownloadProgress } from "@/types";
 import {Progress} from "@/components/ui/progress.tsx";
 import { ItemFooter } from "@/components/ui/item";
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Clock01Icon, Download02Icon, LoaderIcon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Clock01Icon, Download02Icon, LoaderIcon } from "@hugeicons/core-free-icons";
 
 export default function DownloadStatus({ progress }: { progress: TDownloadProgress }) {
 
@@ -34,7 +34,21 @@ export default function DownloadStatus({ progress }: { progress: TDownloadProgre
         case "finished":
             return (
                 <div className="border-l p-2 pl-4">
+                    <HugeiconsIcon icon={LoaderIcon} className="animate-spin" />
+                </div>
+            );
+
+        case "done":
+            return (
+                <div className="border-l p-2 pl-4">
                     <HugeiconsIcon icon={Download02Icon}/>
+                </div>
+            );
+
+        case "error":
+            return (
+                <div className="border-l p-2 pl-4">
+                    <HugeiconsIcon color="yellow" icon={Alert02Icon}/>
                 </div>
             );
     

@@ -5,8 +5,6 @@ import {useRef, useState} from "react";
 import VideoSkeleton from "./VideoSkeleton.tsx";
 import {fetchMetadata, startDownload} from "@/utils/youtube.ts";
 import useVideos from "@/hooks/useVideos.ts";
-import { useDownloads } from "@/stores/useDownloads.ts";
-import type { TDownloadProgress } from "@/types.ts";
 
 export default function SongDownloader() {
     const urlInputRef = useRef<HTMLInputElement>(null);
@@ -25,27 +23,13 @@ export default function SongDownloader() {
 
         // Get metadata
         const metadata = await fetchMetadata(url);
-        
-        metadata.forEach(item => {
-            // Add to progress record
-            const p: TDownloadProgress = {
-                videoId: item.id,
-                status: "queued",
-                percent: 0,
-                eta: null,
-                speed: null,
-            };
-
-            useDownloads.getState().update(p);
-        })
        
-        
-        // useDownloads.getState().update(p);
 
         if (metadata.length > 1) { addVideos(metadata) } else { addVideo(metadata[0]) }
         setShowSkeleton(false);
 
-        startDownload(url);
+
+        startDownload(metadata);
     }
 
     return (

@@ -15,9 +15,7 @@ type VideoProps = {
 export default function Video({id, title, uploader, url, duration }: VideoProps) {
     
     const progress: TDownloadProgress = useDownloads(s => s.progress[id]);
-
-    console.log(progress?.status);
-    
+   
     
     return (
         <Item variant="outline" role="listitem">
