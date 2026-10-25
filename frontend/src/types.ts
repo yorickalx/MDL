@@ -14,7 +14,7 @@ export type TDownloadProgress = {
     videoId: string;
     status: TDownloadStatus;
     percent: number;
-    eta: number;
-    speed: number;
+    eta: number; // seconds
+    speed: number; // bytes/second
     error?: string;
 }

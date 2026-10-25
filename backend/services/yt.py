@@ -53,7 +53,7 @@ def format_download_progress(ydl_data) -> DownloadProgress:
         video_id = ydl_data['info_dict']['id'],
         status = ydl_data['status'],
         percent = ydl_data['_percent'],
-        eta = ydl_data.get('eta'),
-        speed = ydl_data.get('speed'),
+        eta = ydl_data.get('eta'), # seconds
+        speed = ydl_data.get('speed'), # bytes/second
     )
 
