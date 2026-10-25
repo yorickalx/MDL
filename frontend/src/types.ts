@@ -8,13 +8,13 @@ export type TVideo = {
     uploader: string;
 }
 
-type TDownloadStatus = "downloading" | "finished" | "done" | "error";
+type TDownloadStatus = "queued" | "downloading" | "finished" | "done" | "error";
 
 export type TDownloadProgress = {
     videoId: string;
     status: TDownloadStatus;
     percent: number;
-    eta: number; // seconds
-    speed: number; // bytes/second
+    eta: number | null; // seconds
+    speed: number | null; // bytes/second
     error?: string;
 }

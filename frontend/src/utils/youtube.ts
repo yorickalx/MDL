@@ -37,7 +37,7 @@ export async function startDownload(url: string) {
         };
         
         useDownloads.getState().update(p);
-
+    
         if (p.status === "done" || p.status === "error") es.close();
     };
 }

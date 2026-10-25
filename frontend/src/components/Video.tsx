@@ -1,7 +1,8 @@
-import {Progress} from "@/components/ui/progress.tsx";
-import {Item, ItemContent, ItemDescription, ItemMedia, ItemTitle, ItemFooter} from "@/components/ui/item.tsx";
+
+import {Item, ItemContent, ItemDescription, ItemMedia, ItemTitle} from "@/components/ui/item.tsx";
 import type { TDownloadProgress } from "@/types";
 import { useDownloads } from "@/stores/useDownloads";
+import DownloadStatus from "./DownloadStatus";
 
 type VideoProps = {
     id: string,
@@ -15,7 +16,7 @@ export default function Video({id, title, uploader, url, duration }: VideoProps)
     
     const progress: TDownloadProgress = useDownloads(s => s.progress[id]);
 
-    console.log(progress);
+    console.log(progress?.status);
     
     
     return (
@@ -44,15 +45,12 @@ export default function Video({id, title, uploader, url, duration }: VideoProps)
                     <ItemDescription>
                         {formatDuration(duration)}
                     </ItemDescription>
+
+
                 </ItemContent>
-                <ItemFooter>
-                    { progress && <Progress value={progress.percent}/> }
-                    <span className="">
-                        { progress?.speed && formatDownloadSpeed(progress.speed)}
-                    </span>
-                </ItemFooter>
-             {/* TODO: show ETA and speed */}
-             
+
+                <DownloadStatus progress={progress}/>
+                
         </Item>
     );
 }
@@ -61,16 +59,3 @@ function formatDuration(duration: number): string {
      
     return `${(duration / 60).toFixed(0)}:${duration % 60}`;
 } 
-
-function formatDownloadSpeed(speed: number): string { // bytes/second -> KB/s or MB/s
-    const formatted = speed.toFixed(0) // remove decimals
-
-    if (formatted.length > 6) {
-        return (Number(formatted) / 1000000).toFixed(2) + "MB/s";
-    }
-
-    // default to kb
-    return (Number(formatted) / 1000).toFixed(2) + "KB/s";
-
-
-}
